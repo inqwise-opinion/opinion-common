@@ -1,0 +1,53 @@
+image:https://github.com/inqwise-opinion/opinion-common/actions/workflows/ci.yml/badge.svg[CI, link=https://github.com/inqwise-opinion/opinion-common/actions/workflows/ci.yml]
+image:https://github.com/inqwise-opinion/opinion-common/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main[CodeQL, link=https://github.com/inqwise-opinion/opinion-common/security/code-scanning]
+image:https://codecov.io/gh/inqwise-opinion/opinion-common/branch/main/graph/badge.svg[Codecov, link=https://codecov.io/gh/inqwise-opinion/opinion-common]
+image:https://snyk.io/test/github/inqwise-opinion/opinion-common/badge.svg[Snyk Security, link=https://snyk.io/test/github/inqwise-opinion/opinion-common]
+image:https://img.shields.io/maven-central/v/com.inqwise.opinion/opinion-common.svg?label=Maven%20Central[Maven Central, link=https://central.sonatype.com/artifact/com.inqwise.opinion/opinion-common]
+image:https://img.shields.io/badge/License-MIT-yellow.svg[License: MIT, link=https://opensource.org/licenses/MIT]
+image:https://img.shields.io/badge/Java-21%2B-blue.svg[Java Version, link=https://openjdk.org/projects/jdk/21/]
+image:https://img.shields.io/badge/vert.x-5-purple.svg[link="https://vertx.io"]
+
+= Opinion Common
+
+Opinion Common packages the shared domain primitives, utility classes, and
+infrastructure glue that power the Opinion platform. The module is intended to
+be imported by other Opinion services so they can rely on consistent
+configuration, error handling, and integration patterns.
+
+== Requirements
+
+* Java 21 (Temurin 21 or newer JDK).
+* Maven Wrapper (`./mvnw`) included with this repository.
+
+== Add as a Dependency
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.inqwise.opinion</groupId>
+    <artifactId>opinion-common</artifactId>
+    <version>${revision}</version>
+</dependency>
+----
+
+Replace `${revision}` with the released version you wish to consume.
+
+== Development
+
+[subs="+quotes"]
+----
+# Compile sources #
+./mvnw clean compile
+
+# Run the unit test suite #
+./mvnw clean test
+
+# Produce source and javadoc jars #
+./mvnw clean package source:jar javadoc:jar
+----
+
+== Support
+
+* Open an issue in this repository for bugs or feature requests.
+* Consult the project CI and security badges above for the current health
+  status.
