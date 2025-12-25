@@ -36,21 +36,26 @@ jobs:
       - name: Run tests with coverage
         run: mvn clean test jacoco:report -B
 
-      - name: Verify coverage report exists
+      - name: Locate coverage report
         if: matrix.java == 21
+        id: coverage-report
         run: |
-          if [ ! -f target/site/jacoco/jacoco.xml ]; then
-            echo "Coverage report target/site/jacoco/jacoco.xml missing"
-            ls -R target || true
+          set -euo pipefail
+          REPORT_FILE=$(find . -path "*/target/site/jacoco/jacoco.xml" -type f | head -n 1)
+          if [ -z "$REPORT_FILE" ]; then
+            echo "::error ::No JaCoCo XML report found after running tests"
+            find . -maxdepth 3 -type d -name target || true
             exit 1
           fi
+          echo "Using JaCoCo report at $REPORT_FILE"
+          echo "path=$REPORT_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage reports to Codecov
-        if: matrix.java == 21
+        if: matrix.java == 21 && steps.coverage-report.outputs.path != ''
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./target/site/jacoco/jacoco.xml
+          file: ${{ steps.coverage-report.outputs.path }}
           fail_ci_if_error: false
 
   code-quality:
