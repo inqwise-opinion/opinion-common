@@ -34,7 +34,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Run tests with coverage
-        run: mvn clean test jacoco:report -B
+        run: mvn -U clean test jacoco:report -B
 
       - name: Locate coverage report
         if: matrix.java == 21
@@ -80,10 +80,10 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Compile and package
-        run: mvn clean compile package -DskipTests=true -B
+        run: mvn -U clean compile package -DskipTests=true -B
 
       - name: Generate Javadocs
-        run: mvn javadoc:javadoc -B
+        run: mvn -U javadoc:javadoc -B
 
   build-and-publish:
     name: Build and Publish
@@ -109,10 +109,10 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Build and package
-        run: mvn clean compile package -B
+        run: mvn -U clean compile package -B
 
       - name: Generate sources and javadocs
-        run: mvn source:jar javadoc:jar -B
+        run: mvn -U source:jar javadoc:jar -B
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v6
@@ -172,6 +172,7 @@ jobs:
           if [ -n "$NVD_API_KEY" ]; then
             echo "Using NVD API key for faster updates"
             mvn org.owasp:dependency-check-maven:check -B \
+              -U \
               -DfailBuildOnCVSS=7 \
               -Dformat=ALL \
               -DnvdApiKey="$NVD_API_KEY" \
@@ -180,6 +181,7 @@ jobs:
             echo "Warning: NVD API key not provided - update may take a very long time"
             echo "Consider adding NVD_API_KEY secret for faster dependency checking"
             mvn org.owasp:dependency-check-maven:check -B \
+              -U \
               -DfailBuildOnCVSS=7 \
               -Dformat=ALL \
               || echo "Dependency check completed with warnings"
