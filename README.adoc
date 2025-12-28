@@ -2,7 +2,11 @@ image:https://github.com/inqwise-opinion/opinion-common/actions/workflows/ci.yml
 image:https://github.com/inqwise-opinion/opinion-common/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main[CodeQL, link=https://github.com/inqwise-opinion/opinion-common/security/code-scanning]
 image:https://codecov.io/gh/inqwise-opinion/opinion-common/branch/main/graph/badge.svg[Codecov, link=https://codecov.io/gh/inqwise-opinion/opinion-common]
 image:https://snyk.io/test/github/inqwise-opinion/opinion-common/badge.svg[Snyk Security, link=https://snyk.io/test/github/inqwise-opinion/opinion-common]
+
 image:https://img.shields.io/maven-central/v/com.inqwise.opinion/opinion-common.svg?label=Maven%20Central[Maven Central, link=https://central.sonatype.com/artifact/com.inqwise.opinion/opinion-common]
+image:https://img.shields.io/badge/dynamic/xml?color=orange&label=Latest%20Snapshot&query=%2F%2Fmetadata%2Fversioning%2Fversions%2Fversion%5Blast()%5D&url=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fcom%2Finqwise%2Fopinion%2Fopinion-common%2Fmaven-metadata.xml[Latest Snapshot,link=https://central.sonatype.com/repository/maven-snapshots/com/inqwise/opinion/opinion-common]
+image:https://img.shields.io/badge/dynamic/xml?color=blue&label=Snapshot%20Published&query=%2F%2Fmetadata%2Fversioning%2FlastUpdated&url=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fcom%2Finqwise%2Fopinion%2Fopinion-common%2Fmaven-metadata.xml[Snapshot Published,link=https://central.sonatype.com/repository/maven-snapshots/com/inqwise/opinion/opinion-common]
+
 image:https://img.shields.io/badge/License-MIT-yellow.svg[License: MIT, link=https://opensource.org/licenses/MIT]
 image:https://img.shields.io/badge/Java-21%2B-blue.svg[Java Version, link=https://openjdk.org/projects/jdk/21/]
 image:https://img.shields.io/badge/vert.x-5-purple.svg[link="https://vertx.io"]
