@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.inqwise.opinion</groupId>
     <artifactId>opinion-parent</artifactId>
-    <version>7</version>
+    <version>8</version>
   </parent>
 
   <artifactId>opinion-common</artifactId>
