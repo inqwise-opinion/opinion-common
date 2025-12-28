@@ -1,7 +1,5 @@
 package com.inqwise.opinion.common;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.inqwise.opinion.account.MainVerticleTest;
 
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
