@@ -23,22 +23,14 @@ public class Uid {
 	}
 	
 	public String toUidToken() {
-		Objects.requireNonNull(id);
-		Objects.requireNonNull(prefix);
+		
+		Objects.requireNonNull(id, "id");
+		Objects.requireNonNull(prefix, "prefix");
 		var builder = new StringBuilder();
-		builder.append(prefix).append(SEPARATOR).append(AnyBaseEncoder.BASE_52.encode(longToBytesManual(id.longValue())));
+		builder.append(prefix).append(SEPARATOR).append(AnyBaseEncoder.BASE_52.encode(id.longValue()));
 		return builder.toString();
 	}
 	
-	private static final byte[] longToBytesManual(long l) {
-	    byte[] result = new byte[8];
-	    for (int i = 7; i >= 0; i--) {
-	        result[i] = (byte)(l & 0xFF);
-	        l >>= 8;
-	    }
-	    return result;
-	}
-
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -80,7 +72,7 @@ public class Uid {
 		Preconditions.checkElementIndex(separatorIndex, uidToken.length(), "invalid uidToken, no separator found");
 		String prefix = uidToken.substring(0, separatorIndex - 1);
 		String base52id = uidToken.substring(separatorIndex + 1, uidToken.length());
-		long id = AnyBaseEncoder.BASE_52.decode(base52id).longValue();
+		long id = AnyBaseEncoder.BASE_52.decodeToLong(base52id);
 		return builder().withId(id).withPrefix(prefix).build();
 	}
 }
