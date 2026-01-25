@@ -70,7 +70,7 @@ public class Uid {
 		Objects.requireNonNull(uidToken);
 		int separatorIndex = uidToken.indexOf(SEPARATOR);
 		Preconditions.checkElementIndex(separatorIndex, uidToken.length(), "invalid uidToken, no separator found");
-		String prefix = uidToken.substring(0, separatorIndex - 1);
+		String prefix = uidToken.substring(0, separatorIndex);
 		String base52id = uidToken.substring(separatorIndex + 1, uidToken.length());
 		long id = AnyBaseEncoder.BASE_52.decodeToLong(base52id);
 		return builder().withId(id).withPrefix(prefix).build();

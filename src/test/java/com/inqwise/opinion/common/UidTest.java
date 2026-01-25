@@ -88,25 +88,23 @@ class UidTest {
 		}
 	}
 
-	// NOTE: parse() has a known bug at line 81 (substring index off by 1)
-	// This test is disabled until the bug is fixed
-	// @Test
-	// void parse_withValidToken_reconstructsUid() {
-	// 	String prefix = "account";
-	// 	Long id = 123456789L;
-	// 	
-	// 	Uid original = Uid.builder()
-	// 		.withId(id)
-	// 		.withPrefix(prefix)
-	// 		.build();
-	// 	
-	// 	String token = original.toUidToken();
-	// 	Uid parsed = Uid.parse(token);
-	// 	
-	// 	assertNotNull(parsed);
-	// 	assertEquals(id, parsed.getId());
-	// 	assertEquals(prefix, parsed.getPrefix());
-	// }
+	@Test
+	void parse_withValidToken_reconstructsUid() {
+		String prefix = "account";
+		Long id = 123456789L;
+		
+		Uid original = Uid.builder()
+			.withId(id)
+			.withPrefix(prefix)
+			.build();
+		
+		String token = original.toUidToken();
+		Uid parsed = Uid.parse(token);
+		
+		assertNotNull(parsed);
+		assertEquals(id, parsed.getId());
+		assertEquals(prefix, parsed.getPrefix());
+	}
 
 	@Test
 	void parse_withNullToken_throwsException() {
@@ -123,54 +121,51 @@ class UidTest {
 		assertThrows(Exception.class, () -> Uid.parse("noseparator"));
 	}
 
-	// NOTE: parse() has a known bug - disabled until fixed
-	// @Test
-	// void toUidTokenAndParse_roundTrip_preservesValues() {
-	// 	Uid original = Uid.builder()
-	// 		.withId(987654321L)
-	// 		.withPrefix("user")
-	// 		.build();
-	// 	
-	// 	String token = original.toUidToken();
-	// 	Uid parsed = Uid.parse(token);
-	// 	
-	// 	assertEquals(original.getId(), parsed.getId());
-	// 	assertEquals(original.getPrefix(), parsed.getPrefix());
-	// }
+	@Test
+	void toUidTokenAndParse_roundTrip_preservesValues() {
+		Uid original = Uid.builder()
+			.withId(987654321L)
+			.withPrefix("user")
+			.build();
+		
+		String token = original.toUidToken();
+		Uid parsed = Uid.parse(token);
+		
+		assertEquals(original.getId(), parsed.getId());
+		assertEquals(original.getPrefix(), parsed.getPrefix());
+	}
 
-	// NOTE: parse() has a known bug - disabled until fixed
-	// @Test
-	// void toUidTokenAndParse_roundTrip_withDifferentIds() {
-	// 	for (long id : new long[]{1L, 100L, 10000L, 1000000L, Long.MAX_VALUE / 2}) {
-	// 		Uid original = Uid.builder()
-	// 			.withId(id)
-	// 			.withPrefix("test")
-	// 			.build();
-	// 		
-	// 		String token = original.toUidToken();
-	// 		Uid parsed = Uid.parse(token);
-	// 		
-	// 		assertEquals(id, parsed.getId(), "Failed for id: " + id);
-	// 	}
-	// }
+	@Test
+	void toUidTokenAndParse_roundTrip_withDifferentIds() {
+		for (long id : new long[]{1L, 100L, 10000L, 1000000L, Long.MAX_VALUE / 2}) {
+			Uid original = Uid.builder()
+				.withId(id)
+				.withPrefix("test")
+				.build();
+			
+			String token = original.toUidToken();
+			Uid parsed = Uid.parse(token);
+			
+			assertEquals(id, parsed.getId(), "Failed for id: " + id);
+		}
+	}
 
-	// NOTE: parse() has a known bug - disabled until fixed
-	// @Test
-	// void toUidTokenAndParse_roundTrip_withDifferentPrefixes() {
-	// 	String[] prefixes = {"a", "account", "user", "org", "product"};
-	// 	
-	// 	for (String prefix : prefixes) {
-	// 		Uid original = Uid.builder()
-	// 			.withId(12345L)
-	// 			.withPrefix(prefix)
-	// 			.build();
-	// 		
-	// 		String token = original.toUidToken();
-	// 		Uid parsed = Uid.parse(token);
-	// 		
-	// 		assertEquals(prefix, parsed.getPrefix(), "Failed for prefix: " + prefix);
-	// 	}
-	// }
+	@Test
+	void toUidTokenAndParse_roundTrip_withDifferentPrefixes() {
+		String[] prefixes = {"a", "account", "user", "org", "product"};
+		
+		for (String prefix : prefixes) {
+			Uid original = Uid.builder()
+				.withId(12345L)
+				.withPrefix(prefix)
+				.build();
+			
+			String token = original.toUidToken();
+			Uid parsed = Uid.parse(token);
+			
+			assertEquals(prefix, parsed.getPrefix(), "Failed for prefix: " + prefix);
+		}
+	}
 
 	@Test
 	void builderFrom_copiesExistingUid() {
