@@ -186,6 +186,38 @@
 				</dependency>
 			</dependencies>
 		</profile>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-enforcer-plugin</artifactId>
+						<version>3.5.0</version>
+						<executions>
+							<execution>
+								<id>enforce-no-snapshots-on-release</id>
+								<phase>validate</phase>
+								<goals>
+									<goal>enforce</goal>
+								</goals>
+								<configuration>
+									<rules>
+										<requireReleaseVersion>
+											<message>Project version must be a release version when profile release is active.</message>
+										</requireReleaseVersion>
+										<requireReleaseDeps>
+											<message>SNAPSHOT dependencies are not allowed in release flow (including transitive dependencies).</message>
+											<searchTransitive>true</searchTransitive>
+										</requireReleaseDeps>
+									</rules>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 	<build>
