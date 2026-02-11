@@ -155,10 +155,12 @@ jobs:
           echo "after_last_updated_formatted=$AFTER_FMT" >> $GITHUB_OUTPUT
 
       - name: Discord notification
-        if: vars.SNAPSHOT_WEBHOOK_URL != ''
+        if: env.SNAPSHOT_WEBHOOK_URL != ''
         uses: sarisia/actions-status-discord@v1
+        env:
+          SNAPSHOT_WEBHOOK_URL: ${{ vars.SNAPSHOT_WEBHOOK_URL != '' && vars.SNAPSHOT_WEBHOOK_URL || secrets.SNAPSHOT_WEBHOOK_URL }}
         with:
-          webhook: "${{ vars.SNAPSHOT_WEBHOOK_URL }}"
+          webhook: "${{ env.SNAPSHOT_WEBHOOK_URL }}"
           title: "${{ steps.snapshot_change.outputs.title }}"
           description: "${{ steps.snapshot_change.outputs.description }}"
           color: 0x2ea44f
