@@ -60,7 +60,7 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Deploy to Maven Central
+      - name: Validate release version and SNAPSHOT references
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
         run: |
           VERSION_INPUT="${{ github.event.inputs.version }}"
@@ -68,9 +68,41 @@ jobs:
             VERSION_INPUT="${{ github.ref_name }}"
             VERSION_INPUT="${VERSION_INPUT#v}"
           fi
+
           if [[ "$VERSION_INPUT" == *-SNAPSHOT ]]; then
             echo "::error ::Refusing to deploy snapshot version $VERSION_INPUT via release workflow."
             exit 1
+          fi
+
+          git checkout -f "v${VERSION_INPUT}"
+
+          PROJECT_VERSION=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [[ "$PROJECT_VERSION" == *-SNAPSHOT ]]; then
+            echo "::error ::Project version is SNAPSHOT after checkout: $PROJECT_VERSION"
+            exit 1
+          fi
+
+          if [ "$PROJECT_VERSION" != "$VERSION_INPUT" ]; then
+            echo "::error ::Tag version ($VERSION_INPUT) does not match project version ($PROJECT_VERSION)."
+            exit 1
+          fi
+
+          ./mvnw --batch-mode -DskipTests enforcer:enforce \
+            -Denforcer.rules=requireReleaseVersion,requireReleaseDeps
+
+          ./mvnw --batch-mode -DskipTests help:effective-pom -Doutput=effective-pom.xml
+          if grep -n "SNAPSHOT" effective-pom.xml; then
+            echo "::error ::SNAPSHOT references detected in effective POM."
+            exit 1
+          fi
+
+      - name: Deploy to Maven Central
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.version }}"
+          if [ "${VERSION_INPUT}" = "" ]; then
+            VERSION_INPUT="${{ github.ref_name }}"
+            VERSION_INPUT="${VERSION_INPUT#v}"
           fi
           git checkout -f "v${VERSION_INPUT}"
           mvn clean deploy -P sonatype-oss-release -DskipTests -DreleaseVersion="$VERSION_INPUT"
