@@ -130,6 +130,10 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.inqwise</groupId>
+			<artifactId>inqwise-errors</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-junit5</artifactId>
 			<scope>test</scope>
