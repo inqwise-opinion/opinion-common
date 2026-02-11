@@ -31,13 +31,46 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Verify snapshot version
+        id: snapshot_version
         run: |
           VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "Detected version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           if [[ "$VERSION" != *-SNAPSHOT ]]; then
             echo "::error ::Project version $VERSION is not a SNAPSHOT."
             exit 1
           fi
+
+      - name: Detect previous project version
+        id: previous_version
+        run: |
+          CURRENT_VERSION="${{ steps.snapshot_version.outputs.version }}"
+          PREV_VERSION=""
+          BEFORE_SHA="${{ github.event.before }}"
+
+          if [[ -n "$BEFORE_SHA" && "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]]; then
+            if git cat-file -e "${BEFORE_SHA}:pom.xml" 2>/dev/null; then
+              git show "${BEFORE_SHA}:pom.xml" > /tmp/previous-pom.xml
+              PREV_VERSION=$(./mvnw -f /tmp/previous-pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout || true)
+            fi
+          fi
+
+          echo "previous_version=$PREV_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Read snapshot metadata before deploy
+        id: metadata_before
+        run: |
+          GROUP_ID=$(./mvnw help:evaluate -Dexpression=project.groupId -q -DforceStdout)
+          ARTIFACT_ID=$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+          VERSION="${{ steps.snapshot_version.outputs.version }}"
+          GROUP_PATH="${GROUP_ID//./\/}"
+          METADATA_URL="https://central.sonatype.com/repository/maven-snapshots/${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/maven-metadata.xml"
+
+          XML=$(curl -fsSL "$METADATA_URL" || true)
+          LAST_UPDATED=$(printf '%s' "$XML" | sed -n 's:.*<lastUpdated>\([^<]*\)</lastUpdated>.*:\1:p' | head -n 1)
+
+          echo "metadata_url=$METADATA_URL" >> $GITHUB_OUTPUT
+          echo "last_updated=$LAST_UPDATED" >> $GITHUB_OUTPUT
 
       - name: Build and test
         run: ./mvnw --batch-mode clean verify
@@ -47,3 +80,131 @@ jobs:
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+
+      - name: Read snapshot metadata after deploy
+        id: metadata_after
+        run: |
+          METADATA_URL="${{ steps.metadata_before.outputs.metadata_url }}"
+          BEFORE_LAST_UPDATED="${{ steps.metadata_before.outputs.last_updated }}"
+          AFTER_LAST_UPDATED=""
+
+          for attempt in {1..12}; do
+            XML=$(curl -fsSL "$METADATA_URL" || true)
+            CANDIDATE=$(printf '%s' "$XML" | sed -n 's:.*<lastUpdated>\([^<]*\)</lastUpdated>.*:\1:p' | head -n 1)
+
+            if [[ -n "$CANDIDATE" ]]; then
+              AFTER_LAST_UPDATED="$CANDIDATE"
+            fi
+
+            if [[ -n "$AFTER_LAST_UPDATED" && "$AFTER_LAST_UPDATED" != "$BEFORE_LAST_UPDATED" ]]; then
+              break
+            fi
+
+            sleep 10
+          done
+
+          echo "last_updated=$AFTER_LAST_UPDATED" >> $GITHUB_OUTPUT
+
+      - name: Determine notification content
+        id: snapshot_change
+        run: |
+          CURRENT_VERSION="${{ steps.snapshot_version.outputs.version }}"
+          PREVIOUS_VERSION="${{ steps.previous_version.outputs.previous_version }}"
+          BEFORE_LAST_UPDATED="${{ steps.metadata_before.outputs.last_updated }}"
+          AFTER_LAST_UPDATED="${{ steps.metadata_after.outputs.last_updated }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          BRANCH="${{ github.ref_name }}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          format_last_updated() {
+            local ts="$1"
+            if [[ "$ts" =~ ^[0-9]{14}$ ]]; then
+              date -u -d "${ts:0:8} ${ts:8:2}:${ts:10:2}:${ts:12:2}" "+%Y-%m-%d %H:%M:%S UTC"
+            else
+              echo "n/a"
+            fi
+          }
+
+          AFTER_FMT=$(format_last_updated "$AFTER_LAST_UPDATED")
+          BEFORE_FMT=$(format_last_updated "$BEFORE_LAST_UPDATED")
+
+          if [[ -n "$PREVIOUS_VERSION" && "$PREVIOUS_VERSION" != "$CURRENT_VERSION" ]]; then
+            CHANGE_TYPE="new_snapshot_version"
+            TITLE="🆕 ${REPO_NAME} ${CURRENT_VERSION}"
+            DESCRIPTION="New SNAPSHOT version published (prev: ${PREVIOUS_VERSION})."
+            PUSH_CONTENT="🆕 ${REPO_NAME} ${CURRENT_VERSION} (was ${PREVIOUS_VERSION}) | lastUpdated ${AFTER_LAST_UPDATED:-n/a} | ${BRANCH} | ${SHORT_SHA}"
+          elif [[ -n "$AFTER_LAST_UPDATED" && "$AFTER_LAST_UPDATED" != "$BEFORE_LAST_UPDATED" ]]; then
+            CHANGE_TYPE="snapshot_updated"
+            TITLE="🔄 ${REPO_NAME} ${CURRENT_VERSION}"
+            DESCRIPTION="SNAPSHOT metadata updated."
+            PUSH_CONTENT="🔄 ${REPO_NAME} ${CURRENT_VERSION} | lastUpdated ${BEFORE_LAST_UPDATED:-n/a} -> ${AFTER_LAST_UPDATED} | ${BRANCH} | ${SHORT_SHA}"
+          else
+            CHANGE_TYPE="snapshot_deployed"
+            TITLE="✅ ${REPO_NAME} ${CURRENT_VERSION}"
+            DESCRIPTION="SNAPSHOT deploy completed."
+            PUSH_CONTENT="✅ ${REPO_NAME} ${CURRENT_VERSION} deployed | lastUpdated ${AFTER_LAST_UPDATED:-n/a} | ${BRANCH} | ${SHORT_SHA}"
+          fi
+
+          echo "change_type=$CHANGE_TYPE" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "push_content=$PUSH_CONTENT" >> $GITHUB_OUTPUT
+          echo "before_last_updated=$BEFORE_LAST_UPDATED" >> $GITHUB_OUTPUT
+          echo "after_last_updated=$AFTER_LAST_UPDATED" >> $GITHUB_OUTPUT
+          echo "before_last_updated_formatted=$BEFORE_FMT" >> $GITHUB_OUTPUT
+          echo "after_last_updated_formatted=$AFTER_FMT" >> $GITHUB_OUTPUT
+
+      - name: Discord notification
+        if: vars.SNAPSHOT_WEBHOOK_URL != ''
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: "${{ vars.SNAPSHOT_WEBHOOK_URL }}"
+          title: "${{ steps.snapshot_change.outputs.title }}"
+          description: "${{ steps.snapshot_change.outputs.description }}"
+          color: 0x2ea44f
+          username: "Opinion Common"
+          avatar_url: "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+          content: "${{ steps.snapshot_change.outputs.push_content }}"
+          fields: |
+            [
+              {
+                "name": "Version",
+                "value": "${{ steps.snapshot_version.outputs.version }}",
+                "inline": true
+              },
+              {
+                "name": "Metadata lastUpdated",
+                "value": "${{ steps.snapshot_change.outputs.after_last_updated_formatted }} (`${{ steps.snapshot_change.outputs.after_last_updated }}`)",
+                "inline": true
+              },
+              {
+                "name": "Change Type",
+                "value": "${{ steps.snapshot_change.outputs.change_type }}",
+                "inline": true
+              },
+              {
+                "name": "Previous Metadata lastUpdated",
+                "value": "${{ steps.snapshot_change.outputs.before_last_updated_formatted }} (`${{ steps.snapshot_change.outputs.before_last_updated }}`)",
+                "inline": false
+              },
+              {
+                "name": "Branch",
+                "value": "${{ github.ref_name }}",
+                "inline": true
+              },
+              {
+                "name": "Actor",
+                "value": "${{ github.actor }}",
+                "inline": true
+              },
+              {
+                "name": "Commit",
+                "value": "[`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
+                "inline": false
+              },
+              {
+                "name": "Run",
+                "value": "[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                "inline": false
+              }
+            ]
