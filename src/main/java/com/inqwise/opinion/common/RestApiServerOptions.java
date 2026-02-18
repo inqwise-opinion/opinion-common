@@ -61,7 +61,12 @@ public class RestApiServerOptions {
 	}
 	
 	public JsonObject toJson() {
-		var json = new JsonObject();
+		var json = new JsonObject()
+				.put(Keys.HTTP_PORT, httpPort)
+				.put(Keys.HTTP_HOST, httpHost)
+				.put(Keys.LOG_ERROR_TICKETS, logErrorTickets)
+				.put(Keys.PRINT_STACKTRACE, printStacktrace)
+				.put(Keys.SANITIZE_UNEXPECTED_ERRORS, sanitizeUnexpectedErrors);
 
 		return json;
 	}
