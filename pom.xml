@@ -59,7 +59,7 @@
 		<main.verticle>com.inqwise.opinion.common.MainVerticle</main.verticle>
 		<launcher.class>io.vertx.launcher.application.VertxApplication</launcher.class>
 		<central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
-		<jacoco.version>0.8.14</jacoco.version>
+		<jacoco.version>0.8.15</jacoco.version>
 	</properties>
 
 	<repositories>
